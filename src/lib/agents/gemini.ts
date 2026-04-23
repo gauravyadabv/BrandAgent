@@ -3,11 +3,11 @@
  * 
  * Six specialized agents with different roles and model recommendations:
  * 
- * PLANNING TIER (Gemini 1.5 Pro - High reasoning, multi-task understanding):
+ * PLANNING TIER (Gemini 2.0 Flash - High reasoning, multi-task understanding):
  *   - orchestratorPlan()    - Decomposes campaigns into tasks, manages strategy
  *   - creatorGenerate()     - Generates platform-native content with brand voice
  * 
- * EXECUTION TIER (Gemini 1.5 Pro - Rich context, multi-modal):
+ * EXECUTION TIER (Gemini 2.0 Flash - Rich context, multi-modal):
  *   - websiteCrawl()        - Analyzes website content structure and extracts articles
  *   - socialPost()          - Formats content for platform-specific requirements
  * 
@@ -27,8 +27,84 @@ import type {
   KpiSnapshot,
   WebsiteData,
 } from "../types";
+import { tinyfishSocialPost, tinyfishWebsiteCrawl } from "./tinyfish";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const GEMINI_REQUEST_OPTIONS = { apiVersion: "v1" } as const;
+const GEMINI_MODEL = "gemini-2.5-flash-lite";
+
+function getModel(model: string = GEMINI_MODEL) {
+  return genAI.getGenerativeModel({ model }, GEMINI_REQUEST_OPTIONS);
+}
+
+function safeJsonParse<T>(value: string): T | null {
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return null;
+  }
+}
+
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string");
+}
+
+function buildFallbackImageDataUrl(brandName: string, platform: Platform): string {
+  let gStart = "#312E81", gEnd = "#8B5CF6";
+  if (platform === 'instagram') { gStart = "#E1306C"; gEnd = "#833AB4"; }
+  else if (platform === 'x_twitter') { gStart = "#1DA1F2"; gEnd = "#14171A"; }
+  else if (platform === 'tiktok') { gStart = "#000000"; gEnd = "#ff0050"; }
+  else if (platform === 'facebook') { gStart = "#1877F2"; gEnd = "#0C5CBB"; }
+
+  const label = `${brandName} · ${platform.replace("_", " ")}`.replace(/&/g, "&amp;");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${gStart}"/><stop offset="100%" stop-color="${gEnd}"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/><text x="50%" y="45%" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="62" text-anchor="middle" dominant-baseline="middle">BrandAgent</text><text x="50%" y="56%" fill="#FFFFFF" opacity="0.8" font-family="Arial, sans-serif" font-size="32" text-anchor="middle" dominant-baseline="middle">${label}</text></svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+function extractInlineImageDataUrl(response: unknown): string | null {
+  if (!response || typeof response !== "object") return null;
+  const candidates = Reflect.get(response, "candidates");
+  if (!Array.isArray(candidates) || candidates.length === 0) return null;
+  const firstCandidate = candidates[0];
+  if (!firstCandidate || typeof firstCandidate !== "object") return null;
+  const content = Reflect.get(firstCandidate, "content");
+  if (!content || typeof content !== "object") return null;
+  const parts = Reflect.get(content, "parts");
+  if (!Array.isArray(parts)) return null;
+
+  for (const part of parts) {
+    if (!part || typeof part !== "object") continue;
+    const inlineData = Reflect.get(part, "inlineData");
+    if (!inlineData || typeof inlineData !== "object") continue;
+    const mimeType = Reflect.get(inlineData, "mimeType");
+    const data = Reflect.get(inlineData, "data");
+    if (typeof mimeType === "string" && typeof data === "string" && data.length > 0) {
+      return `data:${mimeType};base64,${data}`;
+    }
+  }
+
+  return null;
+}
+
+async function generateImageDataUrl(
+  brand: BrandProfile,
+  platform: Platform,
+  imagePrompt: string
+): Promise<string> {
+  try {
+    const imageModel = getModel();
+    const result = await imageModel.generateContent(
+      `Generate one social media image for ${brand.brand} on ${platform}. ${imagePrompt}`
+    );
+    const imageDataUrl = extractInlineImageDataUrl(result.response);
+    if (imageDataUrl) return imageDataUrl;
+  } catch {
+    // fall through to local fallback image
+  }
+
+  return buildFallbackImageDataUrl(brand.brand, platform);
+}
 
 // ─── Orchestrator Agent (Gemini 1.5 Pro) ────────────────────────────────────
 export async function orchestratorPlan(
@@ -40,7 +116,7 @@ export async function orchestratorPlan(
   priority: string;
   reasoning: string;
 }> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+  const model = getModel();
 
   const prompt = `
 You are the CMO (Chief Marketing Officer) AI Agent for ${brand.brand}.
@@ -80,7 +156,7 @@ export async function creatorGenerate(
   platform: Platform,
   websiteContent?: string
 ): Promise<GeneratedContent> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+  const model = getModel();
 
   const platformRules: Record<Platform, string> = {
     instagram: "Visual-first. Max 2,200 chars. 20-30 hashtags. Emoji-rich. Story-driven.",
@@ -113,27 +189,62 @@ Return ONLY valid JSON with this exact structure:
 
   const result = await model.generateContent(prompt);
   const text = result.response.text().replace(/```json\n?|\n?```/g, "").trim();
-  try {
-    const parsed = JSON.parse(text);
-    parsed.characterCount = parsed.caption.length;
-    return parsed as GeneratedContent;
-  } catch {
-    const defaultContent: GeneratedContent = {
-      platform,
-      caption: `✨ Discover the power of Ayurveda with ${brand.brand}. Nature's best, trusted by families for generations. 🌿 #NaturalWellness #${brand.brand.replace(/\s/g, "")}`,
-      hashtags: ["#Ayurveda", "#NaturalLiving", "#WellnessJourney", `#${brand.brand.replace(/\s/g, "")}`],
-      imagePrompt: `Premium lifestyle photo of ${brand.brand} Ayurvedic products arranged on natural wood with green leaves, golden hour lighting, warm and trustworthy feel`,
-      callToAction: "Shop Now — Link in Bio",
-      tone: "warm, trustworthy, natural",
-      characterCount: 150,
-    };
-    return defaultContent;
-  }
+  const parsed = safeJsonParse<Partial<GeneratedContent>>(text);
+
+  const content: GeneratedContent = {
+    platform,
+    caption:
+      typeof parsed?.caption === "string" && parsed.caption.trim().length > 0
+        ? parsed.caption
+        : `✨ Discover the power of Ayurveda with ${brand.brand}. Nature's best, trusted by families for generations. 🌿 #NaturalWellness #${brand.brand.replace(/\s/g, "")}`,
+    hashtags:
+      asStringArray(parsed?.hashtags).length > 0
+        ? asStringArray(parsed?.hashtags)
+        : ["#Ayurveda", "#NaturalLiving", "#WellnessJourney", `#${brand.brand.replace(/\s/g, "")}`],
+    imagePrompt:
+      typeof parsed?.imagePrompt === "string" && parsed.imagePrompt.trim().length > 0
+        ? parsed.imagePrompt
+        : `Premium lifestyle photo of ${brand.brand} Ayurvedic products arranged on natural wood with green leaves, golden hour lighting, warm and trustworthy feel`,
+    callToAction:
+      typeof parsed?.callToAction === "string" && parsed.callToAction.trim().length > 0
+        ? parsed.callToAction
+        : "Shop Now — Link in Bio",
+    tone:
+      typeof parsed?.tone === "string" && parsed.tone.trim().length > 0
+        ? parsed.tone
+        : "warm, trustworthy, natural",
+    characterCount: 0,
+  };
+
+  content.characterCount = content.caption.length;
+  content.generatedImageUrl = await generateImageDataUrl(
+    brand,
+    platform,
+    content.imagePrompt
+  );
+
+  return content;
 }
 
 // ─── Website Agent — Simulate Tinyfish Crawl ────────────────────────────────
-export async function websiteCrawl(brand: BrandProfile): Promise<WebsiteData> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+export async function websiteCrawl(
+  brand: BrandProfile,
+  onSource?: (source: "tinyfish" | "gemini_fallback", detail: string) => void
+): Promise<WebsiteData> {
+  if (process.env.TINYFISH_API_KEY) {
+    try {
+      const data = await tinyfishWebsiteCrawl(brand);
+      onSource?.("tinyfish", "TinyFish Fetch API used for website crawl");
+      return data;
+    } catch (error) {
+      onSource?.("gemini_fallback", `TinyFish fetch failed, using Gemini fallback: ${String(error)}`);
+      // fall through to Gemini simulation fallback
+    }
+  } else {
+    onSource?.("gemini_fallback", "TINYFISH_API_KEY missing, using Gemini fallback");
+  }
+
+  const model = getModel();
 
   const prompt = `
 You are the Website Crawler AI Agent for ${brand.brand}.
@@ -173,7 +284,15 @@ export async function socialPost(
   brand: BrandProfile,
   content: GeneratedContent
 ): Promise<KpiSnapshot> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  if (process.env.TINYFISH_API_KEY) {
+    try {
+      return await tinyfishSocialPost(brand, content);
+    } catch {
+      // fall through to Gemini simulation fallback
+    }
+  }
+
+  const model = getModel();
 
   const prompt = `
 You are the Social Media AI Agent for ${brand.brand}.
@@ -225,7 +344,7 @@ export async function verifierCheck(
   content: GeneratedContent,
   kpi: KpiSnapshot
 ): Promise<{ verified: boolean; score: number; notes: string; approved: boolean }> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = getModel();
 
   const prompt = `
 You are the Verifier AI Agent for ${brand.brand}.
@@ -272,7 +391,7 @@ export async function analyticsReport(
   usdcSpent: number,
   txCount: number
 ): Promise<{ summary: string; insights: string[]; recommendations: string[]; score: number }> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = getModel();
 
   const avgEngagement = kpis.length > 0
     ? kpis.reduce((a, b) => a + b.engagementRate, 0) / kpis.length
@@ -302,22 +421,45 @@ Return ONLY valid JSON:
 
   const result = await model.generateContent(prompt);
   const text = result.response.text().replace(/```json\n?|\n?```/g, "").trim();
-  try {
-    return JSON.parse(text);
-  } catch {
-    return {
-      summary: `${brand.brand} campaign cycle achieved ${(avgEngagement * 100).toFixed(2)}% avg engagement across ${kpis.length} platforms. Total reach of ${totalReach.toLocaleString()} users with $${usdcSpent.toFixed(4)} USDC spent on-chain.`,
-      insights: [
-        `Engagement rate of ${(avgEngagement * 100).toFixed(2)}% ${avgEngagement >= brand.kpi_targets.engagement_rate ? "meets" : "below"} the ${(brand.kpi_targets.engagement_rate * 100).toFixed(1)}% target`,
-        `Cost per 1,000 reach: $${((usdcSpent / totalReach) * 1000).toFixed(4)} USDC — highly efficient`,
-        `${txCount} on-chain Arc transactions provide full economic audit trail`,
-      ],
-      recommendations: [
-        "Increase Instagram Reels content — video posts outperform static by 3x",
-        "Boost morning posting at 9:00 IST — highest engagement window for FMCG",
-        "Cross-post website articles to Threads for organic reach growth",
-      ],
-      score: 82,
-    };
+  const parsed = safeJsonParse<{
+    summary?: string;
+    insights?: string[];
+    recommendations?: string[];
+    score?: number;
+  }>(text);
+
+  const safeCostPer1kReach = totalReach > 0 ? (usdcSpent / totalReach) * 1000 : 0;
+  const fallback = {
+    summary: `${brand.brand} campaign cycle achieved ${(avgEngagement * 100).toFixed(2)}% avg engagement across ${kpis.length} platforms. Total reach of ${totalReach.toLocaleString()} users with $${usdcSpent.toFixed(4)} USDC spent on-chain.`,
+    insights: [
+      `Engagement rate of ${(avgEngagement * 100).toFixed(2)}% ${avgEngagement >= brand.kpi_targets.engagement_rate ? "meets" : "below"} the ${(brand.kpi_targets.engagement_rate * 100).toFixed(1)}% target`,
+      `Cost per 1,000 reach: $${safeCostPer1kReach.toFixed(4)} USDC — highly efficient`,
+      `${txCount} on-chain Arc transactions provide full economic audit trail`,
+    ],
+    recommendations: [
+      "Increase Instagram Reels content — video posts outperform static by 3x",
+      "Boost morning posting at 9:00 IST — highest engagement window for FMCG",
+      "Cross-post website articles to Threads for organic reach growth",
+    ],
+    score: 82,
+  };
+
+  return {
+    summary:
+      typeof parsed?.summary === "string" && parsed.summary.trim().length > 0
+        ? parsed.summary
+        : fallback.summary,
+    insights:
+      asStringArray(parsed?.insights).length > 0
+        ? asStringArray(parsed?.insights)
+        : fallback.insights,
+    recommendations:
+      asStringArray(parsed?.recommendations).length > 0
+        ? asStringArray(parsed?.recommendations)
+        : fallback.recommendations,
+    score:
+      typeof parsed?.score === "number" && Number.isFinite(parsed.score)
+        ? parsed.score
+        : fallback.score,
   }
 }

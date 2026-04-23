@@ -76,7 +76,7 @@ export default function TransactionFeed({ transactions, showAll }: TransactionFe
         const toColor = AGENT_COLORS[tx.to] || "#10B981";
 
         return (
-          <div key={tx.id} className="tx-row">
+          <div key={tx.id} className="tx-row" style={{ background: `linear-gradient(90deg, ${fromColor}15, transparent)` }}>
             {/* Task Icon */}
             <div
               style={{

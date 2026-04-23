@@ -1,16 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect, useState } from "react";
 import type {
   Agent,
   CampaignCycle,
   Transaction,
   LogEntry,
-  BrandProfile,
   CampaignMetrics,
   Task,
 } from "@/lib/types";
-import { DEFAULT_BRAND, AGENT_DEFINITIONS } from "@/lib/constants";
 import AgentGrid from "@/components/AgentGrid";
 import TransactionFeed from "@/components/TransactionFeed";
 import KpiDashboard from "@/components/KpiDashboard";
@@ -20,32 +18,90 @@ import ContentPreview from "@/components/ContentPreview";
 import Header from "@/components/Header";
 import HeroStats from "@/components/HeroStats";
 import AgentFlowDiagram from "@/components/AgentFlowDiagram";
+import { resetAgentsToIdle, useDashboardStore } from "@/lib/store/dashboard";
 
 export default function Dashboard() {
-  const [brand, setBrand] = useState<BrandProfile>(DEFAULT_BRAND);
-  const [agents, setAgents] = useState<Agent[]>(
-    AGENT_DEFINITIONS.map((d) => ({
-      ...d,
-      status: "idle",
-      usdcBalance: 0.25,
-      totalEarned: 0,
-      tasksCompleted: 0,
-      lastActivity: new Date().toISOString(),
-    }))
-  );
-  const [campaign, setCampaign] = useState<CampaignCycle | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [metrics, setMetrics] = useState<CampaignMetrics | null>(null);
-  const [isRunning, setIsRunning] = useState(false);
-  const [activeTab, setActiveTab] = useState<
-    "overview" | "agents" | "transactions" | "content" | "analytics" | "config"
-  >("overview");
-  const [totalCycles, setTotalCycles] = useState(0);
-  const [totalTxCount, setTotalTxCount] = useState(0);
-  const [totalUsdcSpent, setTotalUsdcSpent] = useState(0);
+  const brand = useDashboardStore((state) => state.brand);
+  const setBrand = useDashboardStore((state) => state.setBrand);
+  const agents = useDashboardStore((state) => state.agents);
+  const setAgents = useDashboardStore((state) => state.setAgents);
+  const campaign = useDashboardStore((state) => state.campaign);
+  const setCampaign = useDashboardStore((state) => state.setCampaign);
+  const transactions = useDashboardStore((state) => state.transactions);
+  const setTransactions = useDashboardStore((state) => state.setTransactions);
+  const logs = useDashboardStore((state) => state.logs);
+  const setLogs = useDashboardStore((state) => state.setLogs);
+  const tasks = useDashboardStore((state) => state.tasks);
+  const setTasks = useDashboardStore((state) => state.setTasks);
+  const metrics = useDashboardStore((state) => state.metrics);
+  const setMetrics = useDashboardStore((state) => state.setMetrics);
+  const isRunning = useDashboardStore((state) => state.isRunning);
+  const setIsRunning = useDashboardStore((state) => state.setIsRunning);
+  const activeTab = useDashboardStore((state) => state.activeTab);
+  const setActiveTab = useDashboardStore((state) => state.setActiveTab);
+  const totalCycles = useDashboardStore((state) => state.totalCycles);
+  const incrementTotalCycles = useDashboardStore((state) => state.incrementTotalCycles);
+  const totalTxCount = useDashboardStore((state) => state.totalTxCount);
+  const incrementTotalTxCount = useDashboardStore((state) => state.incrementTotalTxCount);
+  const totalUsdcSpent = useDashboardStore((state) => state.totalUsdcSpent);
+  const incrementTotalUsdcSpent = useDashboardStore((state) => state.incrementTotalUsdcSpent);
   const abortRef = useRef<AbortController | null>(null);
+  const [isRefreshingBalances, setIsRefreshingBalances] = useState(false);
+
+  const fetchAgentsFromApi = useCallback(async (): Promise<Agent[] | null> => {
+    try {
+      const response = await fetch("/api/agents", { cache: "no-store" });
+      const payload = (await response.json()) as {
+        success: boolean;
+        data?: Agent[];
+      };
+      if (!response.ok || !payload.success || !payload.data) return null;
+      return payload.data;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const refreshAgentBalances = useCallback(async () => {
+    if (isRefreshingBalances) return;
+    setIsRefreshingBalances(true);
+    try {
+      const latestAgents = await fetchAgentsFromApi();
+      if (!latestAgents) return;
+
+      const latestById = Object.fromEntries(latestAgents.map((agent) => [agent.id, agent]));
+      setAgents((prev) =>
+        prev.map((agent) => {
+          const latest = latestById[agent.id];
+          if (!latest) return agent;
+          return {
+            ...agent,
+            walletId: latest.walletId,
+            walletAddress: latest.walletAddress,
+            usdcBalance: latest.usdcBalance,
+          };
+        })
+      );
+    } finally {
+      setIsRefreshingBalances(false);
+    }
+  }, [fetchAgentsFromApi, isRefreshingBalances, setAgents]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadAgents() {
+      const latestAgents = await fetchAgentsFromApi();
+      if (!isMounted || !latestAgents) return;
+      setAgents(latestAgents);
+    }
+
+    void loadAgents();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchAgentsFromApi, setAgents]);
 
   // ── Update agent status based on running tasks ───────────────────────────
   const updateAgentStatus = useCallback(
@@ -66,7 +122,7 @@ export default function Dashboard() {
         })
       );
     },
-    []
+    [setAgents]
   );
 
   // ── Run Campaign ─────────────────────────────────────────────────────────
@@ -79,9 +135,7 @@ export default function Dashboard() {
     setMetrics(null);
 
     // Reset agents to idle
-    setAgents((prev) =>
-      prev.map((a) => ({ ...a, status: "idle", tasksCompleted: 0 }))
-    );
+    setAgents((prev) => resetAgentsToIdle(prev, true));
 
     abortRef.current = new AbortController();
 
@@ -128,8 +182,8 @@ export default function Dashboard() {
               } else if (event.type === "transaction") {
                 const tx = event.data as Transaction;
                 setTransactions((prev) => [tx, ...prev.slice(0, 99)]);
-                setTotalTxCount((n) => n + 1);
-                setTotalUsdcSpent((n) => n + tx.amount);
+                incrementTotalTxCount();
+                incrementTotalUsdcSpent(tx.amount);
                 // Update agent wallet balance
                 setAgents((prev) =>
                   prev.map((a) => {
@@ -154,11 +208,9 @@ export default function Dashboard() {
               } else if (event.type === "cycle_complete") {
                 const cycle = event.data as CampaignCycle;
                 setCampaign(cycle);
-                setTotalCycles((n) => n + 1);
+                incrementTotalCycles();
                 // Reset agents to idle
-                setAgents((prev) =>
-                  prev.map((a) => ({ ...a, status: "idle" }))
-                );
+                setAgents((prev) => resetAgentsToIdle(prev));
               }
             } catch {
               // skip malformed JSON
@@ -172,23 +224,26 @@ export default function Dashboard() {
       }
     } finally {
       setIsRunning(false);
-      setAgents((prev) => prev.map((a) => ({ ...a, status: "idle" })));
+      setAgents((prev) => resetAgentsToIdle(prev));
     }
-  }, [isRunning, brand, updateAgentStatus]);
+  }, [
+    brand,
+    incrementTotalCycles,
+    incrementTotalTxCount,
+    incrementTotalUsdcSpent,
+    isRunning,
+    setAgents,
+    setCampaign,
+    setIsRunning,
+    setLogs,
+    setMetrics,
+    setTasks,
+    setTransactions,
+    updateAgentStatus,
+  ]);
 
   const stopCampaign = () => {
     abortRef.current?.abort();
-  };
-
-  // ── Summary stats ─────────────────────────────────────────────────────────
-  const sessionStats = {
-    totalCycles,
-    totalTxCount,
-    totalUsdcSpent,
-    avgEngagement: metrics?.engagementRate
-      ? (metrics.engagementRate * 100).toFixed(2) + "%"
-      : "—",
-    totalReach: metrics?.reachTotal?.toLocaleString() || "—",
   };
 
   return (
@@ -197,7 +252,6 @@ export default function Dashboard() {
       <Header
         brand={brand}
         isRunning={isRunning}
-        totalTxCount={totalTxCount}
         onRun={runCampaign}
         onStop={stopCampaign}
       />
@@ -218,12 +272,9 @@ export default function Dashboard() {
         <div
           style={{
             display: "flex",
-            gap: 6,
+            gap: 4,
             marginBottom: 28,
-            padding: "6px",
-            background: "rgba(17,24,39,0.6)",
-            border: "1px solid var(--border)",
-            borderRadius: 14,
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
             width: "fit-content",
           }}
         >
@@ -291,7 +342,12 @@ export default function Dashboard() {
         )}
 
         {activeTab === "agents" && (
-          <AgentGrid agents={agents} tasks={tasks} />
+          <AgentGrid
+            agents={agents}
+            tasks={tasks}
+            onRefreshBalances={refreshAgentBalances}
+            isRefreshingBalances={isRefreshingBalances}
+          />
         )}
 
         {activeTab === "transactions" && (
@@ -314,7 +370,7 @@ export default function Dashboard() {
         )}
 
         {activeTab === "analytics" && (
-          <KpiDashboard metrics={metrics} campaign={campaign} totalUsdcSpent={totalUsdcSpent} transactions={transactions} />
+          <KpiDashboard metrics={metrics} campaign={campaign} transactions={transactions} />
         )}
 
         {activeTab === "config" && (

@@ -14,17 +14,33 @@
 
 import { NextResponse } from "next/server";
 import { AGENT_DEFINITIONS } from "@/lib/constants";
-import { getWalletBalance } from "@/lib/payments/circle";
+import { getWalletAddress, getWalletBalance } from "@/lib/payments/circle";
 import type { Agent } from "@/lib/types";
+
+const AGENT_WALLET_ID_BY_ID = {
+  orchestrator: process.env.CIRCLE_ORCHESTRATOR_WALLET_ID,
+  creator: process.env.CIRCLE_CREATOR_WALLET_ID,
+  website: process.env.CIRCLE_WEBSITE_WALLET_ID,
+  social: process.env.CIRCLE_SOCIAL_WALLET_ID,
+  verifier: process.env.CIRCLE_VERIFIER_WALLET_ID,
+  analytics: process.env.CIRCLE_ANALYTICS_WALLET_ID,
+} as const;
 
 // ─── GET /api/agents ──────────────────────────────────────────────────────────
 export async function GET() {
   try {
     const agents: Agent[] = await Promise.all(
       AGENT_DEFINITIONS.map(async (def) => {
-        const balance = await getWalletBalance(def.walletId);
+        const walletId = AGENT_WALLET_ID_BY_ID[def.id] || def.walletId;
+        const [balance, walletAddress] = await Promise.all([
+          getWalletBalance(walletId),
+          getWalletAddress(walletId),
+        ]);
+
         return {
           ...def,
+          walletId,
+          walletAddress: walletAddress || walletId,
           status: "idle" as const,
           usdcBalance: balance,
           totalEarned: 0,

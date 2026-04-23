@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --bg-primary: #080B14;
+  --bg-primary: #020817;
   --bg-secondary: #0D1117;
-  --bg-card: #111827;
-  --bg-card-hover: #1A2235;
+  --bg-card: transparent;
+  --bg-card-hover: rgba(255,255,255,0.02);
   --border: rgba(255,255,255,0.06);
   --border-glow: rgba(99,102,241,0.3);
   --text-primary: #F9FAFB;
@@ -23,12 +23,20 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  background: var(--bg-primary);
+  background: linear-gradient(135deg, #020817, #0f0a2e, #020817);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
   color: var(--text-primary);
   font-family: 'Inter', sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   scroll-behavior: smooth;
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 /* ── Scrollbar ── */
@@ -39,11 +47,11 @@ html, body {
 
 /* ── Glass Card ── */
 .glass-card {
-  background: rgba(17,24,39,0.8);
-  border: 1px solid var(--border);
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 16px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 .glass-card:hover {
@@ -209,26 +217,31 @@ html, body {
   font-size: 12.5px;
   line-height: 1.5;
   transition: background 0.15s;
+  animation: slideInLeft 0.4s ease forwards;
+  opacity: 0;
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 .log-entry:hover { background: rgba(255,255,255,0.03); }
 .log-info { color: var(--text-secondary); }
 .log-success { color: #34D399; }
 .log-warning { color: #FCD34D; }
-.log-error { color: #F87171; }
-.log-payment { color: #00D395; }
+.log-error { color: #F87171; border-left: 2px solid #F87171; box-shadow: -10px 0 20px -10px rgba(239,68,68,0.5); }
+.log-payment { color: #00D395; border-left: 2px solid #00D395; box-shadow: -10px 0 20px -10px rgba(0,211,149,0.5); }
 
 /* ── Stat Card ── */
 .stat-card {
   padding: 20px;
   border-radius: 14px;
-  background: rgba(17,24,39,0.6);
-  border: 1px solid var(--border);
+  background: transparent;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 .stat-value {
-  font-size: 28px;
+  font-size: clamp(2rem, 4vw, 3.5rem);
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.02em;
@@ -259,7 +272,11 @@ html, body {
   border-radius: 10px;
   border: 1px solid transparent;
   transition: all 0.2s;
-  animation: slideIn 0.3s ease;
+  animation: shimmerRow 1s ease-out;
+}
+@keyframes shimmerRow {
+  0% { background: rgba(255,255,255,0.1); }
+  100% { background: transparent; }
 }
 .tx-row:hover {
   background: rgba(99,102,241,0.05);
@@ -337,23 +354,24 @@ html, body {
 /* ── Tabs ── */
 .tab-btn {
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: 0;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   border: none;
+  border-bottom: 2px solid transparent;
   background: transparent;
   color: var(--text-muted);
   transition: all 0.2s;
 }
 .tab-btn.active {
-  background: rgba(99,102,241,0.15);
-  color: #818CF8;
-  border: 1px solid rgba(99,102,241,0.3);
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--accent-indigo);
+  text-shadow: 0 0 10px rgba(99,102,241,0.5);
+  box-shadow: 0 10px 10px -10px rgba(99,102,241,0.5);
 }
 .tab-btn:hover:not(.active) {
   color: var(--text-secondary);
-  background: rgba(255,255,255,0.04);
 }
 
 /* ── Flow Diagram ── */
@@ -361,7 +379,8 @@ html, body {
   padding: 10px 16px;
   border-radius: 10px;
   border: 1px solid var(--border);
-  background: var(--bg-card);
+  background: transparent;
+  backdrop-filter: blur(10px);
   font-size: 12px;
   font-weight: 600;
   display: flex;
@@ -371,11 +390,37 @@ html, body {
   transition: all 0.3s;
 }
 .flow-node.active {
-  border-color: var(--accent-indigo);
-  background: rgba(99,102,241,0.1);
-  box-shadow: 0 0 16px rgba(99,102,241,0.2);
+  background: rgba(255,255,255,0.05);
+  border-color: currentColor;
+  box-shadow: 0 0 20px currentColor;
 }
 .flow-arrow {
   color: var(--text-muted);
   font-size: 16px;
+}
+
+/* ── Typography Utilities ── */
+.section-header {
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.body-text {
+  opacity: 0.7;
+}
+
+/* ── Pulse Ring for active agent nodes ── */
+@keyframes pulseRing {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+
+/* ── Animated dashed arrows ── */
+@keyframes dashOffset {
+  to { stroke-dashoffset: -12; }
+}
+.animate-dash {
+  animation: dashOffset 1s linear infinite;
 }

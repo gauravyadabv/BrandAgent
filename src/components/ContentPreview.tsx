@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import type { GeneratedContent, Task } from "@/lib/types";
 import { PLATFORM_COLORS } from "@/lib/constants";
@@ -24,6 +25,16 @@ function getPlatformIcon(platform: string) {
 
 export default function ContentPreview({ content, tasks, isRunning }: ContentPreviewProps) {
   const [selected, setSelected] = useState<string | null>(null);
+  const postedPlatforms = new Set(
+    tasks
+      .filter((task) => task.type === "social_post" && task.status === "completed")
+      .map((task) => String(task.payload.platform))
+  );
+  const generatedPlatforms = new Set(
+    tasks
+      .filter((task) => task.type === "content_creation" && task.status === "completed")
+      .map((task) => String(task.payload.platform))
+  );
 
   if (content.length === 0) {
     return (
@@ -31,7 +42,7 @@ export default function ContentPreview({ content, tasks, isRunning }: ContentPre
         <div style={{ fontSize: 48, marginBottom: 16 }}>✍️</div>
         <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>AI-Generated Content</h2>
         <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 20 }}>
-          The Creator Agent uses Gemini 1.5 Pro to generate platform-native content
+          The Creator Agent uses Gemini 2.5 Flash Lite to generate platform-native content
           tailored to your brand voice, channel format, and KPI targets.
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
@@ -83,6 +94,7 @@ export default function ContentPreview({ content, tasks, isRunning }: ContentPre
                   cursor: "pointer",
                   textAlign: "left",
                   transition: "all 0.2s",
+                  boxShadow: isActive ? `0 0 20px ${color}30` : "none",
                 }}
               >
                 <span style={{ fontSize: 18 }}>{getPlatformIcon(c.platform)}</span>
@@ -132,10 +144,43 @@ export default function ContentPreview({ content, tasks, isRunning }: ContentPre
               </div>
             </div>
             <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-              <span className="badge badge-success">✓ Generated</span>
-              <span className="badge badge-success">✓ Posted</span>
+              <span className={`badge ${generatedPlatforms.has(selectedContent.platform) ? "badge-success" : ""}`}>
+                {generatedPlatforms.has(selectedContent.platform) ? "✓ Generated" : "Generating..."}
+              </span>
+              <span className={`badge ${postedPlatforms.has(selectedContent.platform) ? "badge-success" : ""}`}>
+                {postedPlatforms.has(selectedContent.platform)
+                  ? "✓ Posted"
+                  : isRunning
+                    ? "Posting..."
+                    : "Pending Post"}
+              </span>
             </div>
           </div>
+
+          {selectedContent.generatedImageUrl && (
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+                Generated Visual
+              </div>
+              <div
+                style={{
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  border: "1px solid var(--border)",
+                  background: "rgba(255,255,255,0.03)",
+                }}
+              >
+                <Image
+                  src={selectedContent.generatedImageUrl}
+                  alt={`${selectedContent.platform} creative`}
+                  width={1200}
+                  height={630}
+                  unoptimized
+                  style={{ display: "block", width: "100%", maxHeight: 360, objectFit: "cover" }}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Caption */}
           <div style={{ marginBottom: 20 }}>
@@ -205,7 +250,7 @@ export default function ContentPreview({ content, tasks, isRunning }: ContentPre
             </div>
             <div>
               <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
-                Image Prompt (DALL-E)
+                Image Prompt
               </div>
               <div
                 style={{

@@ -6,7 +6,6 @@ import { PLATFORM_COLORS } from "@/lib/constants";
 interface KpiDashboardProps {
   metrics: CampaignMetrics | null;
   campaign: CampaignCycle | null;
-  totalUsdcSpent: number;
   transactions: Transaction[];
 }
 
@@ -30,9 +29,9 @@ function MetricCard({
   return (
     <div
       className="stat-card"
-      style={{ borderTop: `2px solid ${color}`, gap: 10 }}
+      style={{ gap: 10, padding: 0 }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `2px solid ${color}40`, paddingBottom: 8 }}>
         <span style={{ fontSize: 20 }}>{icon}</span>
         {target && (
           <span
@@ -50,7 +49,12 @@ function MetricCard({
           </span>
         )}
       </div>
-      <div className="stat-value" style={{ fontSize: 26, color }}>
+      <div className="stat-value" style={{ 
+        background: `linear-gradient(135deg, ${color}, #ffffff)`,
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent",
+        backgroundClip: "text"
+      }}>
         {value}
       </div>
       <div className="stat-label">{label}</div>
@@ -59,7 +63,7 @@ function MetricCard({
   );
 }
 
-export default function KpiDashboard({ metrics, campaign, totalUsdcSpent, transactions }: KpiDashboardProps) {
+export default function KpiDashboard({ metrics, campaign, transactions }: KpiDashboardProps) {
   if (!metrics) {
     return (
       <div className="glass-card" style={{ padding: 48, textAlign: "center" }}>
@@ -187,8 +191,12 @@ export default function KpiDashboard({ metrics, campaign, totalUsdcSpent, transa
                       <span style={{ color: "#00D395", fontWeight: 700 }}>${total.toFixed(4)}</span>
                     </div>
                   </div>
-                  <div className="progress-bar">
-                    <div className="progress-fill" style={{ width: `${pct}%` }} />
+                  <div className="progress-bar" style={{ height: 8, background: "rgba(255,255,255,0.05)" }}>
+                    <div className="progress-fill" style={{ 
+                      width: `${pct}%`, 
+                      background: `linear-gradient(90deg, transparent, #00D395)`, 
+                      boxShadow: "0 0 10px rgba(0,211,149,0.5)"
+                    }} />
                   </div>
                 </div>
               );

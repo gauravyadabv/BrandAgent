@@ -84,35 +84,45 @@ export default function HeroStats({
           key={stat.label}
           className="stat-card"
           style={{
-            borderLeft: `3px solid ${stat.color}20`,
             position: "relative",
-            overflow: "hidden",
+            overflow: "visible",
+            alignItems: "center",
+            textAlign: "center",
           }}
         >
           {/* Glow bg */}
           <div
             style={{
               position: "absolute",
-              top: -20,
-              right: -20,
-              width: 80,
-              height: 80,
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 120,
+              height: 120,
               borderRadius: "50%",
-              background: `${stat.color}10`,
-              filter: "blur(20px)",
+              background: `${stat.color}15`,
+              filter: "blur(30px)",
               pointerEvents: "none",
+              zIndex: 0,
             }}
           />
-          <div style={{ fontSize: 22 }}>{stat.icon}</div>
-          <div
-            className="stat-value"
-            style={{ color: stat.color, fontSize: 22 }}
-          >
-            {stat.value}
-          </div>
-          <div className="stat-label">{stat.label}</div>
-          <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
-            {stat.sub}
+          <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+            <div style={{ fontSize: 24 }}>{stat.icon}</div>
+            <div
+              className="stat-value"
+              style={{
+                background: `linear-gradient(135deg, ${stat.color}, #ffffff)`,
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              {stat.value}
+            </div>
+            <div className="stat-label section-header">{stat.label}</div>
+            <div className="body-text" style={{ fontSize: 11, marginTop: 2 }}>
+              {stat.sub}
+            </div>
           </div>
         </div>
       ))}

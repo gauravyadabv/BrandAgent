@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   title: "BrandAgent — Autonomous AI Social Media Management",
   description:
     "Multi-agent AI platform for FMCG brands. Autonomous content creation, posting, verification & on-chain USDC payments via Circle Nanopayments on Arc L1.",
@@ -18,6 +19,20 @@ export const metadata: Metadata = {
     title: "BrandAgent — Autonomous AI Social Media Management",
     description: "Multi-agent AI platform settling every task on Arc L1 via Circle Nanopayments",
     type: "website",
+    images: [
+      {
+        url: "/preview.png",
+        width: 1200,
+        height: 630,
+        alt: "BrandAgent dashboard preview",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BrandAgent — Autonomous AI Social Media Management",
+    description: "Multi-agent AI platform settling every task on Arc L1 via Circle Nanopayments",
+    images: ["/preview.png"],
   },
 };
 

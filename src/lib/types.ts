@@ -89,6 +89,7 @@ export interface GeneratedContent {
   caption: string;
   hashtags: string[];
   imagePrompt: string;
+  generatedImageUrl?: string;
   callToAction: string;
   tone: string;
   characterCount: number;

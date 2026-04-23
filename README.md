@@ -203,7 +203,13 @@ npm install
 
 ### Step 2 — Configure Environment Variables
 
-Create a `.env.local` file in the project root:
+Copy the example env file, then fill in values:
+
+```bash
+cp .env.local.example .env.local
+```
+
+`.env.local.example` contains:
 
 ```bash
 # ── REQUIRED ──────────────────────────────────────────────────────
@@ -223,9 +229,16 @@ CIRCLE_WEBSITE_WALLET_ID=
 CIRCLE_SOCIAL_WALLET_ID=
 CIRCLE_VERIFIER_WALLET_ID=
 CIRCLE_ANALYTICS_WALLET_ID=
+
+# ── TinyFish Agent API (optional — enables real crawl/post automation) ──
+TINYFISH_API_KEY=
+TINYFISH_API_BASE_URL=https://agent.tinyfish.ai
+TINYFISH_USE_VAULT=true
+TINYFISH_VAULT_PROVIDER=
+TINYFISH_VAULT_TOKEN=
 ```
 
-> **Note:** Without Circle keys, all payments are simulated with realistic tx hashes and block numbers. The AI agents still run fully — only the Gemini API key is strictly required.
+> **Note:** Only `GEMINI_API_KEY` is required. Circle and TinyFish keys are optional — both fall back to simulation if unavailable.
 
 ### Step 3 — Run Development Server
 
@@ -408,23 +421,21 @@ Get or update the current brand profile.
 
 | Area | Status | Description |
 |---|---|---|
-| Website Crawling | ⚠️ Simulated | Gemini simulates crawl results — no real Tinyfish API |
-| Social Posting | ⚠️ Simulated | No real Twitter/Meta/TikTok API calls |
-| Image Generation | ❌ Missing | `imagePrompt` is generated but no image is created |
+| Website Crawling | ✅ TinyFish-enabled | Uses TinyFish Agent API when configured, with Gemini fallback |
+| Social Posting | ⚠️ Partial TinyFish | Uses TinyFish Browser/Vault flow when configured; may still fallback to simulated KPIs |
+| Image Generation | ✅ Basic | Creator now returns a generated image data URL (Gemini image model + local fallback) |
 | Data Persistence | ❌ Missing | In-memory only — resets on server restart |
-| Error Recovery | ⚠️ Basic | Single try/catch; mid-cycle failure aborts entire run |
+| Error Recovery | ✅ Improved | Per-step retries + platform-level failure isolation in orchestrator |
 | Circle Payments | ⚠️ Optional | Falls back to simulation without API keys |
 
 ---
 
 ## 🗺️ Roadmap
 
-- [ ] Real Tinyfish API integration for website crawling
+- [x] TinyFish API integration for website crawling + vault-aware social automation fallback
 - [ ] Real social platform API posting (Meta Graph, Twitter v2, TikTok)
-- [ ] Image generation via Google Imagen or DALL-E 3
+- [ ] Upgrade image generation quality with production image model tuning
 - [ ] Database persistence (Supabase or Vercel KV)
-- [ ] Zustand global state management
-- [ ] Granular error handling + per-step retries in orchestrator
 - [ ] Scheduled campaign automation (cron-based daily cycles)
 - [ ] Multi-brand support
 - [ ] Real Circle Nanopayments on Arc L1 mainnet

@@ -1,16 +1,18 @@
 "use client";
 
 import type { BrandProfile } from "@/lib/types";
+import { useDashboardStore } from "@/lib/store/dashboard";
 
 interface HeaderProps {
   brand: BrandProfile;
   isRunning: boolean;
-  totalTxCount: number;
   onRun: () => void;
   onStop: () => void;
 }
 
-export default function Header({ brand, isRunning, totalTxCount, onRun, onStop }: HeaderProps) {
+export default function Header({ brand, isRunning, onRun, onStop }: HeaderProps) {
+  const totalTxCount = useDashboardStore((state) => state.totalTxCount);
+
   return (
     <header
       style={{

@@ -6,6 +6,8 @@ import { AGENT_COLORS } from "@/lib/constants";
 interface AgentGridProps {
   agents: Agent[];
   tasks: Task[];
+  onRefreshBalances: () => void;
+  isRefreshingBalances: boolean;
 }
 
 function getAgentIcon(id: string) {
@@ -37,7 +39,18 @@ function StatusBadge({ status }: { status: Agent["status"] }) {
   );
 }
 
-export default function AgentGrid({ agents, tasks }: AgentGridProps) {
+function formatWalletAddress(address: string): string {
+  if (!address) return "Unavailable";
+  if (address.length <= 10) return address;
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+export default function AgentGrid({
+  agents,
+  tasks,
+  onRefreshBalances,
+  isRefreshingBalances,
+}: AgentGridProps) {
   // Get last task per agent
   const lastTaskByAgent: Record<string, Task> = {};
   tasks.forEach((t) => {
@@ -221,30 +234,48 @@ export default function AgentGrid({ agents, tasks }: AgentGridProps) {
                 </div>
               )}
 
-              {/* Wallet Address */}
+              {/* Wallet Address + Balance */}
               <div
                 style={{
                   marginTop: 12,
                   fontSize: 10,
                   color: "var(--text-muted)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
                 }}
               >
-                <span
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: "50%",
-                    background: color,
-                    display: "inline-block",
-                    flexShrink: 0,
-                  }}
-                />
-                <span className="mono" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {agent.walletAddress}
-                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: color,
+                      display: "inline-block",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span className="mono" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {formatWalletAddress(agent.walletAddress)}
+                  </span>
+                </div>
+
+                <div style={{ marginTop: 6, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                  <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+                    Wallet Balance: <span style={{ color: "#00D395", fontWeight: 700 }}>${agent.usdcBalance.toFixed(2)} USDC</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={onRefreshBalances}
+                    disabled={isRefreshingBalances}
+                    className="btn-outline"
+                    style={{
+                      fontSize: 10,
+                      padding: "4px 8px",
+                      opacity: isRefreshingBalances ? 0.7 : 1,
+                    }}
+                  >
+                    {isRefreshingBalances ? "Refreshing..." : "↻ Refresh"}
+                  </button>
+                </div>
               </div>
             </div>
           );

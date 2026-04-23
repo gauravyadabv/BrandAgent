@@ -2,7 +2,6 @@
 
 import { useRef, useEffect } from "react";
 import type { LogEntry } from "@/lib/types";
-import { AGENT_COLORS } from "@/lib/constants";
 
 interface ActivityLogProps {
   logs: LogEntry[];
@@ -63,7 +62,7 @@ export default function ActivityLog({ logs }: ActivityLogProps) {
       >
         <div style={{ fontSize: 32 }}>🔴</div>
         <div style={{ fontSize: 13, fontWeight: 500 }}>Live activity will appear here</div>
-        <div style={{ fontSize: 12 }}>Click "Run Campaign" to start the agent network</div>
+        <div style={{ fontSize: 12 }}>Click &quot;Run Campaign&quot; to start the agent network</div>
       </div>
     );
   }
@@ -82,7 +81,6 @@ export default function ActivityLog({ logs }: ActivityLogProps) {
     >
       {logs.map((log) => {
         const { cls, indicator } = getLevelStyle(log.level);
-        const agentColor = log.agentId ? AGENT_COLORS[log.agentId] : undefined;
 
         return (
           <div key={log.id} className={`log-entry ${cls}`}>

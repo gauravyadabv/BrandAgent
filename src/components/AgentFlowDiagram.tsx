@@ -60,8 +60,7 @@ export default function AgentFlowDiagram({ agents, tasks, isRunning }: AgentFlow
               style={{
                 flexShrink: 0,
                 borderColor: isActive ? color : undefined,
-                background: isActive ? `${color}15` : undefined,
-                boxShadow: isActive ? `0 0 20px ${color}30` : undefined,
+                color: isActive ? color : "inherit",
               }}
             >
               <span style={{ fontSize: 18 }}>🧠</span>
@@ -69,21 +68,26 @@ export default function AgentFlowDiagram({ agents, tasks, isRunning }: AgentFlow
                 <div style={{ fontSize: 12, fontWeight: 700, color: isActive ? color : "var(--text-primary)" }}>
                   Orchestrator
                 </div>
-                <div style={{ fontSize: 10, color: "var(--text-muted)" }}>Gemini 1.5 Pro</div>
+                <div style={{ fontSize: 10, color: "var(--text-muted)" }}>
+                  ${orch?.usdcBalance?.toFixed(2) ?? "0.00"} USDC
+                </div>
               </div>
               {isActive && (
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: color, animation: "pulse 1.5s infinite" }} />
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, borderRadius: 10, border: `2px solid ${color}`, animation: "pulseRing 1.5s infinite" }} />
               )}
             </div>
           );
         })()}
 
         {/* Arrow + payment label */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "0 4px", flexShrink: 0 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "0 8px", flexShrink: 0, width: 60 }}>
           <div style={{ fontSize: 10, color: "#00D395", fontWeight: 600, whiteSpace: "nowrap", marginBottom: 4 }}>
             USDC Pay
           </div>
-          <div style={{ color: "var(--text-muted)", fontSize: 18, lineHeight: 1 }}>→</div>
+          <svg width="100%" height="20" viewBox="0 0 100 20" preserveAspectRatio="none">
+            <line x1="0" y1="10" x2="100" y2="10" stroke="var(--text-muted)" strokeWidth="2" strokeDasharray="6,6" className={isRunning ? "animate-dash" : ""} />
+            <polygon points="95,5 100,10 95,15" fill="var(--text-muted)" />
+          </svg>
         </div>
 
         {/* Worker Nodes */}
@@ -100,11 +104,12 @@ export default function AgentFlowDiagram({ agents, tasks, isRunning }: AgentFlow
                 key={id}
                 className={`flow-node ${isActive ? "active" : ""}`}
                 style={{
+                  position: "relative",
                   flexDirection: "column",
                   gap: 6,
                   minWidth: 100,
                   borderColor: isActive ? color : isDone ? `${color}50` : undefined,
-                  background: isActive ? `${color}15` : isDone ? `${color}08` : undefined,
+                  color: isActive ? color : "inherit",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -118,7 +123,7 @@ export default function AgentFlowDiagram({ agents, tasks, isRunning }: AgentFlow
                     </div>
                   </div>
                   {isActive && (
-                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: color, animation: "pulse 1s infinite", marginLeft: "auto" }} />
+                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, borderRadius: 10, border: `2px solid ${color}`, animation: "pulseRing 1.5s infinite", pointerEvents: "none" }} />
                   )}
                 </div>
 
@@ -151,11 +156,14 @@ export default function AgentFlowDiagram({ agents, tasks, isRunning }: AgentFlow
         </div>
 
         {/* Arrow */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "0 4px", flexShrink: 0 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "0 8px", flexShrink: 0, width: 60 }}>
           <div style={{ fontSize: 10, color: "#A78BFA", fontWeight: 600, whiteSpace: "nowrap", marginBottom: 4 }}>
             Arc L1
           </div>
-          <div style={{ color: "var(--text-muted)", fontSize: 18, lineHeight: 1 }}>→</div>
+          <svg width="100%" height="20" viewBox="0 0 100 20" preserveAspectRatio="none">
+            <line x1="0" y1="10" x2="100" y2="10" stroke="var(--text-muted)" strokeWidth="2" strokeDasharray="6,6" className={isRunning ? "animate-dash" : ""} />
+            <polygon points="95,5 100,10 95,15" fill="var(--text-muted)" />
+          </svg>
         </div>
 
         {/* Arc L1 Settlement */}
