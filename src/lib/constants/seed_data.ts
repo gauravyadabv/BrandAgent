@@ -35,10 +35,10 @@ export const HACKATHON_SEED_TRANSACTIONS: Transaction[] = Array.from({ length: 5
     from,
     to,
     amount: parseFloat((Math.random() * 0.04 + 0.005).toFixed(4)),
-    currency: "USDC",
+    currency: "USDC" as const,
     taskType,
     timestamp,
-    status: "confirmed",
+    status: "confirmed" as const,
     arcExplorerUrl: `https://explorer.arc.io/tx/${txHash}`,
     blockNumber: 1245000 + i,
   };
