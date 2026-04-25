@@ -3,7 +3,7 @@ import { runCampaignCycle } from "@/lib/campaign/orchestrator";
 import type { BrandProfile } from "@/lib/types";
 import { DEFAULT_BRAND } from "@/lib/constants";
 
-// ─── POST /api/campaign/run ───────────────────────────────────────────────────
+// ─── POST /api/campaign/run ─────────────────────────────────a──────────────────
 // Launches a full autonomous campaign cycle with streaming Server-Sent Events.
 // The client listens on this stream to get real-time agent updates.
 
@@ -52,8 +52,8 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
-  return NextResponse.json({ 
-    success: true, 
-    message: "BrandAgent Campaign API — POST to run a campaign cycle" 
+  return NextResponse.json({
+    success: true,
+    message: "BrandAgent Campaign API — POST to run a campaign cycle"
   });
 }

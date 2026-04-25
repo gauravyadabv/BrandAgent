@@ -206,7 +206,7 @@ export default function AgentGrid({
                 <div
                   style={{
                     padding: "8px 12px",
-                    background: "rgba(255,255,255,0.02)",
+                    background: "var(--bg-card)",
                     border: "1px solid var(--border)",
                     borderRadius: 8,
                     fontSize: 11,

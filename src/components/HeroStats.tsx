@@ -111,7 +111,7 @@ export default function HeroStats({
             <div
               className="stat-value"
               style={{
-                background: `linear-gradient(135deg, ${stat.color}, #ffffff)`,
+                background: `linear-gradient(135deg, ${stat.color}, #e2e8f0)`,
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",

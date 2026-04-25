@@ -80,7 +80,7 @@ export default function Header({ brand, isRunning, onRun, onStop }: HeaderProps)
             {brand.brand}
           </span>
           <span style={{ width: 1, height: 14, background: "var(--border)" }} />
-          <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{brand.brand_voice.split(",")[0]}</span>
+          <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{brand?.brand_voice?.split(",")[0] || "No voice"}</span>
         </div>
 
         {/* Right — Controls */}
