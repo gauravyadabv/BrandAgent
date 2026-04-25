@@ -19,6 +19,7 @@ import ContentPreview from "@/components/ContentPreview";
 import Header from "@/components/Header";
 import HeroStats from "@/components/HeroStats";
 import AgentFlowDiagram from "@/components/AgentFlowDiagram";
+import ArcReportViewer from "@/components/ArcReportViewer";
 import { DEFAULT_BRAND } from "@/lib/constants";
 import { resetAgentsToIdle, useDashboardStore } from "@/lib/store/dashboard";
 
@@ -379,13 +380,13 @@ export default function DashboardPage() {
         style={{
           maxWidth: 1400,
           margin: "0 auto",
-          padding: "24px 24px 60px",
+          padding: "16px 20px 40px",
         }}
       >
         <div
           style={{
-            padding: 20,
-            marginBottom: 20,
+            padding: "14px 20px",
+            marginBottom: 16,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -400,11 +401,12 @@ export default function DashboardPage() {
           <div>
             <div
               style={{
-                fontSize: 12,
-                letterSpacing: "0.18em",
+                fontSize: 11,
+                letterSpacing: "0.14em",
                 textTransform: "uppercase",
-                color: "var(--text-secondary)",
-                marginBottom: 8,
+                color: "var(--text-muted)",
+                marginBottom: 6,
+                fontWeight: 600,
               }}
             >
               Active Workspace
@@ -412,10 +414,11 @@ export default function DashboardPage() {
 
             <div
               style={{
-                fontSize: 28,
+                fontSize: 26,
                 fontWeight: 800,
                 color: "var(--text-primary)",
                 lineHeight: 1.1,
+                letterSpacing: "-0.02em",
               }}
             >
               {brand.brand}
@@ -425,48 +428,90 @@ export default function DashboardPage() {
               style={{
                 marginTop: 8,
                 display: "flex",
-                gap: 14,
+                gap: 12,
                 flexWrap: "wrap",
                 color: "var(--text-secondary)",
-                fontSize: 14,
+                fontSize: 13,
+                alignItems: "center",
               }}
             >
               <span>{brand.industry || "General"}</span>
-              <span>•</span>
+              <span style={{ opacity: 0.4 }}>·</span>
               <span>{brand.website || "No website"}</span>
-              <span>•</span>
-              <span style={{ color: "#34d399" }}>Circle + Arc L1 enabled</span>
+              <span style={{ opacity: 0.4 }}>·</span>
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                  color: "#34d399",
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+              >
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#34d399", boxShadow: "0 0 5px #34d399", display: "inline-block" }} />
+                Circle + Arc L1
+              </span>
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <button
               onClick={handleSwitchCompany}
+              className="btn-outline"
               style={{
-                padding: "12px 16px",
-                borderRadius: 14,
-                border: "1px solid var(--border)",
-                background: "var(--bg-card)",
-                color: "var(--text-primary)",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "10px 18px",
+                borderRadius: 12,
+                fontSize: 13,
                 fontWeight: 600,
-                cursor: "pointer",
               }}
             >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 3h5v5" />
+                <path d="M4 20L21 3" />
+                <path d="M21 16v5h-5" />
+                <path d="M15 15l6 6" />
+                <path d="M4 4l5 5" />
+                <path d="M3 16v5h5" />
+              </svg>
               Switch Company
             </button>
 
             <button
               onClick={handleLogout}
               style={{
-                padding: "12px 16px",
-                borderRadius: 14,
-                border: "1px solid rgba(239,68,68,0.22)",
-                background: "rgba(239,68,68,0.10)",
-                color: "#fecaca",
-                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "10px 18px",
+                borderRadius: 12,
+                border: "1px solid rgba(239,68,68,0.25)",
+                background: "rgba(239,68,68,0.06)",
+                color: "#f87171",
+                fontSize: 13,
+                fontWeight: 700,
                 cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = "rgba(239,68,68,0.12)";
+                e.currentTarget.style.borderColor = "rgba(239,68,68,0.4)";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = "rgba(239,68,68,0.06)";
+                e.currentTarget.style.borderColor = "rgba(239,68,68,0.25)";
+                e.currentTarget.style.transform = "translateY(0)";
               }}
             >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
               Logout
             </button>
           </div>
@@ -484,19 +529,20 @@ export default function DashboardPage() {
           style={{
             display: "flex",
             gap: 4,
-            marginBottom: 28,
+            marginBottom: 20,
             borderBottom: "1px solid rgba(99,102,241,0.2)",
             width: "fit-content",
           }}
         >
           {(
             [
-              { key: "overview", label: "⚡ Overview" },
-              { key: "agents", label: "🤖 Agents" },
-              { key: "transactions", label: "💸 Transactions" },
-              { key: "content", label: "✍️ Content" },
-              { key: "analytics", label: "📊 Analytics" },
-              { key: "config", label: "⚙️ Config" },
+              { key: "overview",     label: "Overview" },
+              { key: "agents",       label: "Agents" },
+              { key: "transactions", label: "Transactions" },
+              { key: "content",      label: "Content" },
+              { key: "analytics",    label: "Analytics" },
+              { key: "arc-reports",  label: "Arc Reports" },
+              { key: "config",       label: "Config" },
             ] as { key: typeof activeTab; label: string }[]
           ).map((tab) => (
             <button
@@ -516,7 +562,7 @@ export default function DashboardPage() {
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
               gridTemplateRows: "auto auto",
-              gap: 20,
+              gap: 16,
             }}
           >
             <div style={{ gridColumn: "1 / -1" }}>
@@ -552,7 +598,7 @@ export default function DashboardPage() {
                     color: "var(--text-primary)",
                   }}
                 >
-                  🔴 Live Activity Log
+                  Live Activity Log
                 </h3>
                 {isRunning && (
                   <span className="live-badge">
@@ -589,19 +635,36 @@ export default function DashboardPage() {
                     color: "var(--text-primary)",
                   }}
                 >
-                  ⛓️ Arc L1 Transactions
+                  Arc L1 Transactions
                 </h3>
-                <span
-                  style={{
-                    fontSize: 12,
-                    color: "var(--accent-emerald)",
-                    fontWeight: 600,
-                  }}
-                >
-                  {totalTxCount} on-chain
-                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <button 
+                    onClick={() => setActiveTab("transactions")}
+                    style={{ 
+                      fontSize: 11, 
+                      color: "var(--accent-indigo)", 
+                      background: "none", 
+                      border: "none", 
+                      cursor: "pointer",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em"
+                    }}
+                  >
+                    View All ↗
+                  </button>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      color: "var(--accent-emerald)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {totalTxCount} on-chain
+                  </span>
+                </div>
               </div>
-              <TransactionFeed transactions={transactions.slice(0, 8)} />
+              <TransactionFeed transactions={transactions.slice(0, 30)} />
             </div>
           </div>
         )}
@@ -616,26 +679,27 @@ export default function DashboardPage() {
         )}
 
         {activeTab === "transactions" && (
-          <div className="glass-card" style={{ padding: 24 }}>
+          <div className="glass-card" style={{ padding: 20 }}>
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                marginBottom: 20,
+                marginBottom: 16,
               }}
             >
-              <h2 style={{ fontSize: 18, fontWeight: 700 }}>
-                ⛓️ On-Chain Transaction History
-              </h2>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)" }}>
+                  Recent Activity History
+                </h3>
+                <span className="arc-badge" style={{ fontSize: 10 }}>On-Chain Ledger</span>
+              </div>
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                 <span
-                  style={{ fontSize: 13, color: "var(--text-secondary)" }}
+                  style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}
                 >
-                  {transactions.length} transactions · $
-                  {totalUsdcSpent.toFixed(4)} USDC total
+                  {totalTxCount} Verified TXS · Settled: ${totalUsdcSpent.toFixed(4)} USDC
                 </span>
-                <span className="arc-badge">Arc L1</span>
               </div>
             </div>
             <TransactionFeed transactions={transactions} showAll />
@@ -656,6 +720,15 @@ export default function DashboardPage() {
             campaign={campaign}
             transactions={transactions}
           />
+        )}
+
+        {activeTab === "arc-reports" && (
+          <div className="glass-card" style={{ padding: 24 }}>
+            <ArcReportViewer
+              transactions={transactions}
+              totalUsdcSpent={totalUsdcSpent}
+            />
+          </div>
         )}
 
         {activeTab === "config" && (

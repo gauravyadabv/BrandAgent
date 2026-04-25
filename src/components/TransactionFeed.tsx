@@ -8,17 +8,15 @@ interface TransactionFeedProps {
   showAll?: boolean;
 }
 
-function getTaskIcon(taskType: string) {
-  const icons: Record<string, string> = {
-    content_creation: "✍️",
-    website_crawl: "🌐",
-    social_post: "📢",
-    kpi_extraction: "📊",
-    post_verification: "✅",
-    analytics_report: "📈",
-  };
-  return icons[taskType] || "💸";
-}
+// Clean text abbreviations instead of emojis
+const TASK_SHORT: Record<string, string> = {
+  content_creation: "Create",
+  website_crawl: "Crawl",
+  social_post: "Post",
+  kpi_extraction: "KPI",
+  post_verification: "Verify",
+  analytics_report: "Report",
+};
 
 function getAgentLabel(id: string) {
   const labels: Record<string, string> = {
@@ -48,12 +46,16 @@ export default function TransactionFeed({ transactions, showAll }: TransactionFe
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          padding: "40px 20px",
+          padding: "48px 20px",
           color: "var(--text-muted)",
-          gap: 12,
+          gap: 10,
         }}
       >
-        <div style={{ fontSize: 36 }}>⛓️</div>
+        {/* Clean chain icon */}
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4 }}>
+          <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
+          <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+        </svg>
         <div style={{ fontSize: 13, fontWeight: 500 }}>No transactions yet</div>
         <div style={{ fontSize: 12 }}>Run a campaign to generate on-chain Arc L1 transactions</div>
       </div>
@@ -67,62 +69,74 @@ export default function TransactionFeed({ transactions, showAll }: TransactionFe
         flexDirection: "column",
         gap: 4,
         overflowY: showAll ? "visible" : "auto",
-        maxHeight: showAll ? "none" : 300,
+        maxHeight: showAll ? "none" : 450,
         paddingRight: 4,
       }}
     >
       {transactions.map((tx) => {
         const fromColor = AGENT_COLORS[tx.from] || "#6366F1";
         const toColor = AGENT_COLORS[tx.to] || "#10B981";
+        const taskLabel = TASK_SHORT[tx.taskType] || tx.taskType;
 
         return (
-          <div key={tx.id} className="tx-row" style={{ background: `linear-gradient(90deg, ${fromColor}15, transparent)` }}>
-            {/* Task Icon */}
+          <div
+            key={tx.id}
+            className="tx-row"
+            style={{ background: `linear-gradient(90deg, ${fromColor}12, transparent)` }}
+          >
+            {/* Task Type Pill */}
             <div
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                background: "rgba(255,255,255,0.04)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 14,
+                padding: "3px 8px",
+                borderRadius: 6,
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+                background: `${fromColor}15`,
+                border: `1px solid ${fromColor}28`,
+                color: fromColor,
                 flexShrink: 0,
+                whiteSpace: "nowrap",
               }}
             >
-              {getTaskIcon(tx.taskType)}
+              {taskLabel}
             </div>
 
             {/* From → To */}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
                 <span
                   style={{
                     fontSize: 11,
                     fontWeight: 700,
                     color: fromColor,
                     padding: "1px 6px",
-                    background: `${fromColor}15`,
+                    background: `${fromColor}12`,
                     borderRadius: 4,
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {getAgentLabel(tx.from)}
                 </span>
-                <span style={{ fontSize: 10, color: "var(--text-muted)" }}>→</span>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
                 <span
                   style={{
                     fontSize: 11,
                     fontWeight: 700,
                     color: toColor,
                     padding: "1px 6px",
-                    background: `${toColor}15`,
+                    background: `${toColor}12`,
                     borderRadius: 4,
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {getAgentLabel(tx.to)}
                 </span>
-                <span style={{ fontSize: 10, color: "var(--text-muted)", marginLeft: "auto" }}>
+                <span style={{ fontSize: 10, color: "var(--text-muted)", marginLeft: "auto", whiteSpace: "nowrap" }}>
                   {timeAgo(tx.timestamp)}
                 </span>
               </div>
@@ -154,12 +168,7 @@ export default function TransactionFeed({ transactions, showAll }: TransactionFe
             </div>
 
             {/* Amount */}
-            <div
-              style={{
-                textAlign: "right",
-                flexShrink: 0,
-              }}
-            >
+            <div style={{ textAlign: "right", flexShrink: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 800, color: "#00D395" }}>
                 ${tx.amount.toFixed(4)}
               </div>

@@ -42,3 +42,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# hackathon presentation assets
+VOICE_SCRIPT_AND_SLIDES.md
+ppx/
+screencast/
+*.mp4
+*.pptx
+*.mov

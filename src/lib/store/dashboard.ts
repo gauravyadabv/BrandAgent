@@ -11,7 +11,7 @@ import type {
   Transaction,
 } from "@/lib/types";
 
-type ActiveTab = "overview" | "agents" | "transactions" | "content" | "analytics" | "config";
+type ActiveTab = "overview" | "agents" | "transactions" | "content" | "analytics" | "arc-reports" | "config";
 
 type DashboardStore = {
   brand: BrandProfile;
@@ -61,55 +61,44 @@ export function resetAgentsToIdle(agents: Agent[], resetCompletedCount = false):
 }
 
 export const useDashboardStore = create<DashboardStore>()(
-  persist(
-    (set) => ({
-      brand: DEFAULT_BRAND,
-      agents: createInitialAgents(),
-      campaign: null,
-      transactions: [],
-      logs: [],
-      tasks: [],
-      metrics: null,
-      isRunning: false,
-      activeTab: "overview",
-      totalCycles: 0,
-      totalTxCount: 0,
-      totalUsdcSpent: 0,
-      setBrand: (brand) => set({ brand }),
-      setAgents: (updater) =>
-        set((state) => ({
-          agents: typeof updater === "function" ? updater(state.agents) : updater,
-        })),
-      setCampaign: (campaign) => set({ campaign }),
-      setTransactions: (updater) =>
-        set((state) => ({
-          transactions:
-            typeof updater === "function" ? updater(state.transactions) : updater,
-        })),
-      setLogs: (updater) =>
-        set((state) => ({
-          logs: typeof updater === "function" ? updater(state.logs) : updater,
-        })),
-      setTasks: (updater) =>
-        set((state) => ({
-          tasks: typeof updater === "function" ? updater(state.tasks) : updater,
-        })),
-      setMetrics: (metrics) => set({ metrics }),
-      setIsRunning: (isRunning) => set({ isRunning }),
-      setActiveTab: (activeTab) => set({ activeTab }),
-      incrementTotalCycles: () => set((state) => ({ totalCycles: state.totalCycles + 1 })),
-      incrementTotalTxCount: () => set((state) => ({ totalTxCount: state.totalTxCount + 1 })),
-      incrementTotalUsdcSpent: (amount) =>
-        set((state) => ({ totalUsdcSpent: state.totalUsdcSpent + amount })),
-    }),
-    {
-      name: "brand-agent-dashboard-session",
-      storage: createJSONStorage(() => sessionStorage),
-      partialize: (state) => ({
-        totalCycles: state.totalCycles,
-        totalTxCount: state.totalTxCount,
-        totalUsdcSpent: state.totalUsdcSpent,
-      }),
-    }
-  )
+  (set) => ({
+    brand: DEFAULT_BRAND,
+    agents: createInitialAgents(),
+    campaign: null,
+    transactions: [],
+    logs: [],
+    tasks: [],
+    metrics: null,
+    isRunning: false,
+    activeTab: "overview",
+    totalCycles: 0,
+    totalTxCount: 0,
+    totalUsdcSpent: 0,
+    setBrand: (brand) => set({ brand }),
+    setAgents: (updater) =>
+      set((state) => ({
+        agents: typeof updater === "function" ? updater(state.agents) : updater,
+      })),
+    setCampaign: (campaign) => set({ campaign }),
+    setTransactions: (updater) =>
+      set((state) => ({
+        transactions:
+          typeof updater === "function" ? updater(state.transactions) : updater,
+      })),
+    setLogs: (updater) =>
+      set((state) => ({
+        logs: typeof updater === "function" ? updater(state.logs) : updater,
+      })),
+    setTasks: (updater) =>
+      set((state) => ({
+        tasks: typeof updater === "function" ? updater(state.tasks) : updater,
+      })),
+    setMetrics: (metrics) => set({ metrics }),
+    setIsRunning: (isRunning) => set({ isRunning }),
+    setActiveTab: (activeTab) => set({ activeTab }),
+    incrementTotalCycles: () => set((state) => ({ totalCycles: state.totalCycles + 1 })),
+    incrementTotalTxCount: () => set((state) => ({ totalTxCount: state.totalTxCount + 1 })),
+    incrementTotalUsdcSpent: (amount) =>
+      set((state) => ({ totalUsdcSpent: state.totalUsdcSpent + amount })),
+  })
 );

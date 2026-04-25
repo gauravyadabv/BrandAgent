@@ -10,24 +10,54 @@ interface AgentGridProps {
   isRefreshingBalances: boolean;
 }
 
-function getAgentIcon(id: string) {
-  const icons: Record<string, string> = {
-    orchestrator: "🧠",
-    creator: "✍️",
-    website: "🌐",
-    social: "📢",
-    verifier: "🔍",
-    analytics: "📊",
-  };
-  return icons[id] || "🤖";
-}
+// 2-letter monogram per agent — clean and professional
+const AGENT_ICONS: Record<string, (color: string) => React.ReactNode> = {
+  orchestrator: (color) => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z" />
+      <path d="M12 6v6l4 2" />
+    </svg>
+  ),
+  creator: (color) => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3v3m0 12v3m9-9h-3M6 12H3m15.364-6.364l-2.121 2.121M8.757 15.243l-2.121 2.121m0-10.607l2.121 2.121m7.071 7.071l2.121 2.121" />
+    </svg>
+  ),
+  website: (color) => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="2" y1="12" x2="22" y2="12" />
+      <path d="M12 2a15.3 15.3 0 0 1 0 20M12 2a15.3 15.3 0 0 0 0 20" />
+    </svg>
+  ),
+  social: (color) => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+      <polyline points="16 6 12 2 8 6" />
+      <line x1="12" y1="2" x2="12" y2="15" />
+    </svg>
+  ),
+  verifier: (color) => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <polyline points="9 12 11 14 15 10" />
+    </svg>
+  ),
+  analytics: (color) => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10" />
+      <line x1="12" y1="20" x2="12" y2="4" />
+      <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  ),
+};
 
 function StatusBadge({ status }: { status: Agent["status"] }) {
   const config = {
-    idle: { label: "Idle", cls: "badge-idle", dot: "pulse-dot-idle" },
+    idle:    { label: "Idle",    cls: "badge-idle",    dot: "pulse-dot-idle" },
     running: { label: "Running", cls: "badge-running", dot: "pulse-dot-running" },
-    success: { label: "Done", cls: "badge-success", dot: "pulse-dot-success" },
-    error: { label: "Error", cls: "badge-error", dot: "pulse-dot-error" },
+    success: { label: "Done",    cls: "badge-success", dot: "pulse-dot-success" },
+    error:   { label: "Error",   cls: "badge-error",   dot: "pulse-dot-error" },
     waiting: { label: "Waiting", cls: "badge-waiting", dot: "pulse-dot-idle" },
   };
   const c = config[status] || config.idle;
@@ -51,23 +81,18 @@ export default function AgentGrid({
   onRefreshBalances,
   isRefreshingBalances,
 }: AgentGridProps) {
-  // Get last task per agent
   const lastTaskByAgent: Record<string, Task> = {};
-  tasks.forEach((t) => {
-    lastTaskByAgent[t.agentId] = t;
-  });
+  tasks.forEach((t) => { lastTaskByAgent[t.agentId] = t; });
 
   const taskCountByAgent: Record<string, number> = {};
-  tasks.forEach((t) => {
-    taskCountByAgent[t.agentId] = (taskCountByAgent[t.agentId] || 0) + 1;
-  });
+  tasks.forEach((t) => { taskCountByAgent[t.agentId] = (taskCountByAgent[t.agentId] || 0) + 1; });
 
   return (
     <div>
       <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>🤖 Agent Network</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Agent Network</h2>
         <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
-          6 specialized agents · Each with dedicated Circle Programmable Wallet · All payments settle on Arc L1
+          6 specialized agents · Each with a dedicated Circle Programmable Wallet · All payments settle on Arc L1
         </p>
       </div>
 
@@ -100,8 +125,8 @@ export default function AgentGrid({
                     position: "absolute",
                     inset: -1,
                     borderRadius: 16,
-                    border: `2px solid ${color}60`,
-                    boxShadow: `0 0 24px ${color}30`,
+                    border: `2px solid ${color}55`,
+                    boxShadow: `0 0 22px ${color}28`,
                     pointerEvents: "none",
                     animation: "pulse 2s ease-in-out infinite",
                   }}
@@ -111,27 +136,28 @@ export default function AgentGrid({
               {/* Header Row */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  {/* Monogram avatar */}
                   <div
                     style={{
                       width: 40,
                       height: 40,
                       borderRadius: 12,
-                      background: `${color}18`,
-                      border: `1px solid ${color}35`,
+                      background: `${color}15`,
+                      border: `1px solid ${color}30`,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: 20,
+                      flexShrink: 0,
                     }}
                   >
-                    {getAgentIcon(agent.id)}
+                    {AGENT_ICONS[agent.id]?.(color)}
                   </div>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
                       {agent.name}
                     </div>
-                    <div style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2 }}>
-                      Agent #{agent.id.toUpperCase().slice(0, 4)}
+                    <div style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.07em", marginTop: 2 }}>
+                      Agent · {agent.id.toUpperCase().slice(0, 4)}
                     </div>
                   </div>
                 </div>
@@ -147,8 +173,8 @@ export default function AgentGrid({
               <div
                 style={{
                   padding: "10px 12px",
-                  background: "rgba(0,211,149,0.06)",
-                  border: "1px solid rgba(0,211,149,0.15)",
+                  background: "rgba(0,211,149,0.05)",
+                  border: "1px solid rgba(0,211,149,0.13)",
                   borderRadius: 10,
                   marginBottom: 14,
                 }}
@@ -177,9 +203,7 @@ export default function AgentGrid({
                     borderRadius: 8,
                   }}
                 >
-                  <div style={{ fontSize: 18, fontWeight: 800, color }}>
-                    {agent.tasksCompleted}
-                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color }}>{agent.tasksCompleted}</div>
                   <div style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                     Tasks Done
                   </div>
@@ -192,9 +216,7 @@ export default function AgentGrid({
                     borderRadius: 8,
                   }}
                 >
-                  <div style={{ fontSize: 18, fontWeight: 800, color: "#A78BFA" }}>
-                    {taskCount}
-                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: "#A78BFA" }}>{taskCount}</div>
                   <div style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                     This Cycle
                   </div>
@@ -234,14 +256,8 @@ export default function AgentGrid({
                 </div>
               )}
 
-              {/* Wallet Address + Balance */}
-              <div
-                style={{
-                  marginTop: 12,
-                  fontSize: 10,
-                  color: "var(--text-muted)",
-                }}
-              >
+              {/* Wallet Address + Refresh */}
+              <div style={{ marginTop: 12, fontSize: 10, color: "var(--text-muted)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <span
                     style={{
@@ -260,18 +276,14 @@ export default function AgentGrid({
 
                 <div style={{ marginTop: 6, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                   <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>
-                    Wallet Balance: <span style={{ color: "#00D395", fontWeight: 700 }}>${agent.usdcBalance.toFixed(2)} USDC</span>
+                    Balance: <span style={{ color: "#00D395", fontWeight: 700 }}>${agent.usdcBalance.toFixed(2)} USDC</span>
                   </span>
                   <button
                     type="button"
                     onClick={onRefreshBalances}
                     disabled={isRefreshingBalances}
                     className="btn-outline"
-                    style={{
-                      fontSize: 10,
-                      padding: "4px 8px",
-                      opacity: isRefreshingBalances ? 0.7 : 1,
-                    }}
+                    style={{ fontSize: 10, padding: "4px 8px", opacity: isRefreshingBalances ? 0.7 : 1 }}
                   >
                     {isRefreshingBalances ? "Refreshing..." : "↻ Refresh"}
                   </button>
