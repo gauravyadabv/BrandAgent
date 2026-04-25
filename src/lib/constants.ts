@@ -26,6 +26,7 @@ export const DEFAULT_BRAND: BrandProfile = {
   },
   usdc_budget_per_cycle: 0.025,
   max_daily_cycles: 4,
+  industry: "Ayurvedic FMCG",
 };
 
 // ─── Agent Definitions ───────────────────────────────────────────────────────

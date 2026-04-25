@@ -24,6 +24,7 @@ export interface BrandProfile {
   };
   usdc_budget_per_cycle: number;
   max_daily_cycles: number;
+  industry?: string;
 }
 
 // ─── Agent Types ────────────────────────────────────────────────────────────
